@@ -3,10 +3,12 @@ body {
  padding-left: 20px;
  padding-right: 20px;
  padding-bottom: 20px;
+ max-width: 1600px;
 
 };
 
 .header {
+    max-width: 1600px;
     text-align: center;
     padding: auto;
     width: 100%;
@@ -20,5 +22,6 @@ body {
 
 .search-form {
 padding-top: 5px;
+
 
 };

@@ -9,8 +9,13 @@ const BASE_URL = "https://pixabay.com/api/";
 const API_KEY = "38704294-b9169c0a05cb876a56f757da2";
 
 const form = document.querySelector('.search-form');
-const galery = document.querySelector('.gallery');
+const gallery = document.querySelector('.gallery');
 const target = document.querySelector('.js-guard');
+let galleryLightBox = '';
+
+let currentPage = 1;
+let searchImage = '';
+let cards = '';
 
 
 let options = {
@@ -18,68 +23,84 @@ let options = {
   rootMargin: "400px",
   threshold: 1.0,
 };
+
 let observer = new IntersectionObserver(onLoad, options);
-let currentPage = 1;
+
 
 form.addEventListener('submit', handlerForm);
 
-function onLoad(entries, observer) {
- 
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      currentPage += 1;
-      getImages(searchImage, currentPage)
-        .then(resp => {
-          galery.insertAdjacentHTML('beforeend', createMurcup(cards));  
-        })
-        .catch((e) =>
-           
-          Notify.failure("Sorry, there are no images matching your search query. Please try again.")
-        
-        );
-
-    }
-  })
-}
-
 function handlerForm(evt) {
   evt.preventDefault();
-  galery.innerHTML = '';
-  const searchImage = evt.currentTarget.searchQuery.value;
+  gallery.innerHTML = '';
+  searchImage = evt.currentTarget.searchQuery.value;
+  
+
   getImages(searchImage, currentPage)
-    .then(resp => {
+    .then((resp) => {
          
-      const cards = resp.data.hits
+      cards = resp.data.hits
       if (cards.length === 0) {
-        Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+        Notify.failure("Sorry, there are no images matching your search query. Please try again.");
         return
       };
         
       Notify.success(`Hooray! We found ${resp.data.totalHits} images.`);
       
-      console.log(cards)
+      gallery.insertAdjacentHTML('beforeend', createMurcup(cards));
+      galleryLightBox = new SimpleLightbox('.gallery a');
+      galleryLightBox.refresh();
       
-      galery.insertAdjacentHTML('beforeend', createMurcup(cards));
-      new SimpleLightbox('.gallery a');
       observer.observe(target);
-
-  
+      
     })
-    .catch((e) =>
+    .catch((err) =>
            
       Notify.failure("Sorry, there are no images matching your search query. Please try again.")
         
     );
-  return searchImage;
+  
 }
 
-async function getImages(searchImage, page = 1) {
+function onLoad(entries, observer) {
+ 
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      
+      currentPage += 1;
+     
+      getImages(searchImage, currentPage)
+        .then((resp) => {
+      //     if (cards.length === 0) {
+      //   observer.unobserve(target);
+      //   return
+      // };
+    
+          gallery.insertAdjacentHTML('beforeend', createMurcup(cards));
+          if (cards.length === 0) {
+            observer.unobserve(target);
+      };
+          scrollPage();
+          galleryLightBox = new SimpleLightbox('.gallery a');
+          galleryLightBox.refresh();
+          // Не спрацьовує refresh()
+        })
+        .catch((err) =>
+           
+          Notify.failure("We're sorry, but you've reached the end of search results.")
+        
+      );
+    
+    }
+  })
+}
+
+async function getImages(reqest, page = 1) {
   
     const resp = await axios.get(BASE_URL,
         {
             params: {
                 key: API_KEY,
-                q: searchImage,
+                q: reqest,
                 image_type: "photo",
                 orientation: "horizontal",
                 safesearch: true,
@@ -89,9 +110,7 @@ async function getImages(searchImage, page = 1) {
         }
             
     );
-    return resp;
-    
-          
+    return resp;          
     
 };
 
@@ -118,4 +137,16 @@ function createMurcup(arr) {
     </p>
   </div>
 </div>`).join('');
+};
+
+function scrollPage() {
+  const { height: cardHeight } = document
+    .querySelector(".gallery")
+    .firstElementChild.getBoundingClientRect();
+
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: "smooth",
+  });
 };

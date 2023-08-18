@@ -8,7 +8,7 @@ const form = document.querySelector('.search-form');
 const gallery = document.querySelector('.gallery');
 const target = document.querySelector('.js-guard');
 
-let currentPage = 1;
+let currentPage = '';
 let searchImage = '';
 let cards = '';
 let data = '';
@@ -28,6 +28,7 @@ form.addEventListener('submit', handlerForm);
 function handlerForm(evt) {
   evt.preventDefault();
   gallery.innerHTML = '';
+  currentPage = 1;
   observer.unobserve(target);
   searchImage = evt.currentTarget.searchQuery.value;
   
@@ -64,24 +65,41 @@ function onLoad(entries, observer) {
     if (entry.isIntersecting) {
       
       currentPage += 1;
-     
+
       getImages(searchImage, currentPage)
-        .then((resp) => {
-          gallery.insertAdjacentHTML('beforeend', createMurcup(cards));
-          data = resp.data;
-          let totalPages = data.totalHits / data.hits.length;
-          galleryLightBox.refresh();
-          // Не спрацьовує refresh()
-          if (currentPage > totalPages) {
-            observer.unobserve(target);
+    .then((resp) => {
+      data = resp.data;   
+      cards = data.hits
+      
+      if (cards.length === 0) {
+        Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+        return
       };
-          
+        
+      
+      
+      gallery.insertAdjacentHTML('beforeend', createMurcup(cards));
+      
+      galleryLightBox.refresh();
+      
+      observer.observe(target);
+
+      let totalPages = data.totalHits / data.hits.length;
+      
+      if (currentPage > totalPages) {
+        Notify.failure("We're sorry, but you've reached the end of search results.");
+        observer.unobserve(target);
+        
+          };
+      
+    })
+    .catch((err) =>
            
-        })
-        .catch((err) =>
-           
-          Notify.failure("We're sorry, but you've reached the end of search results.") 
-      );
+      Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+        
+    );
+     
+      
     }
   })
 };

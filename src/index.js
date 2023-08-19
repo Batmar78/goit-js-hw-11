@@ -25,14 +25,14 @@ let observer = new IntersectionObserver(onLoad, options);
 
 form.addEventListener('submit', handlerForm);
 
-function handlerForm(evt) {
+async function handlerForm(evt) {
   evt.preventDefault();
   gallery.innerHTML = '';
   currentPage = 1;
   observer.unobserve(target);
   searchImage = evt.currentTarget.searchQuery.value;
   
-  getImages(searchImage, currentPage)
+  await getImages(searchImage, currentPage)
     .then((resp) => {
       data = resp.data;   
       cards = data.hits
@@ -59,14 +59,14 @@ function handlerForm(evt) {
   
 }
 
-function onLoad(entries, observer) {
+async function onLoad(entries, observer) {
  
-  entries.forEach((entry) => {
+  await entries.forEach((entry) => {
     if (entry.isIntersecting) {
       
       currentPage += 1;
 
-      getImages(searchImage, currentPage)
+    getImages(searchImage, currentPage)
     .then((resp) => {
       data = resp.data;   
       cards = data.hits
